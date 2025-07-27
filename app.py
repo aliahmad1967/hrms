@@ -1,3 +1,4 @@
+
 import streamlit as st
 from auth import login, logout, is_logged_in
 from database import get_db
@@ -81,7 +82,7 @@ else:
         st.subheader("👥 إدارة الموظفين")
         db = next(get_db())
         
-        tab1, tab2 = st.tabs(["عرض الموظفين", "إضافة موظف"])
+        tab1, tab2, tab3 = st.tabs(["عرض الموظفين", "إضافة موظف", "تعديل/حذف"])
         
         with tab1:
             employees = db.query(Employee).all()
@@ -123,6 +124,46 @@ else:
                         st.rerun()
                     else:
                         st.error("يرجى ملء جميع الحقول المطلوبة")
+        
+        with tab3:
+            employees = db.query(Employee).all()
+            if employees:
+                emp_names = [f"{e.full_name} ({e.employee_id})" for e in employees]
+                selected_emp = st.selectbox("اختر موظفًا للتعديل", emp_names)
+                
+                if selected_emp:
+                    emp_id = selected_emp.split("(")[1].split(")")[0]
+                    employee = db.query(Employee).filter(Employee.employee_id == emp_id).first()
+                    
+                    if employee:
+                        with st.form("edit_employee"):
+                            full_name = st.text_input("الاسم الكامل", value=employee.full_name)
+                            job_title = st.text_input("الوظيفة", value=employee.job_title)
+                            hire_date = st.date_input("تاريخ التعيين", value=employee.hire_date)
+                            salary = st.number_input("الراتب", min_value=0.0, step=100.0, value=float(employee.salary))
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                update_btn = st.form_submit_button("تحديث الموظف")
+                            with col2:
+                                delete_btn = st.form_submit_button("حذف الموظف", type="secondary")
+                            
+                            if update_btn:
+                                employee.full_name = full_name
+                                employee.job_title = job_title
+                                employee.hire_date = hire_date
+                                employee.salary = salary
+                                db.commit()
+                                st.success("تم تحديث بيانات الموظف بنجاح!")
+                                st.rerun()
+                            
+                            if delete_btn:
+                                db.delete(employee)
+                                db.commit()
+                                st.success("تم حذف الموظف بنجاح!")
+                                st.rerun()
+            else:
+                st.info("لا توجد بيانات موظفين للتعديل")
 
     elif choice == "تتبع الحضور":
         st.subheader("📅 تتبع الحضور")
@@ -146,14 +187,24 @@ else:
                     submitted = st.form_submit_button("تسجيل الحضور")
                     if submitted and selected_emp:
                         emp_id = selected_emp.split("(")[1].split(")")[0]
-                        new_attendance = Attendance(
-                            employee_id=emp_id,
-                            date=att_date,
-                            status=status
-                        )
-                        db.add(new_attendance)
-                        db.commit()
-                        st.success("تم تسجيل الحضور بنجاح!")
+                        
+                        # Check if already exists
+                        existing = db.query(Attendance).filter(
+                            Attendance.employee_id == emp_id,
+                            Attendance.date == att_date
+                        ).first()
+                        
+                        if existing:
+                            st.warning("هذا التسجيل موجود بالفعل!")
+                        else:
+                            new_attendance = Attendance(
+                                employee_id=emp_id,
+                                date=att_date,
+                                status=status
+                            )
+                            db.add(new_attendance)
+                            db.commit()
+                            st.success("تم تسجيل الحضور بنجاح!")
                 else:
                     st.warning("لا توجد موظفين مسجلين")
         
@@ -298,16 +349,25 @@ else:
                     
                     submitted = st.form_submit_button("حفظ الراتب")
                     if submitted:
-                        new_salary = Salary(
-                            employee_id=emp_id,
-                            month=month,
-                            basic_salary=basic_salary,
-                            deductions=deductions,
-                            net_salary=net_salary
-                        )
-                        db.add(new_salary)
-                        db.commit()
-                        st.success("تم حفظ الراتب بنجاح!")
+                        # Check if already exists
+                        existing = db.query(Salary).filter(
+                            Salary.employee_id == emp_id,
+                            Salary.month == month
+                        ).first()
+                        
+                        if existing:
+                            st.warning("هذا الراتب مسجل بالفعل!")
+                        else:
+                            new_salary = Salary(
+                                employee_id=emp_id,
+                                month=month,
+                                basic_salary=basic_salary,
+                                deductions=deductions,
+                                net_salary=net_salary
+                            )
+                            db.add(new_salary)
+                            db.commit()
+                            st.success("تم حفظ الراتب بنجاح!")
                 else:
                     st.warning("لا توجد موظفين مسجلين")
 
