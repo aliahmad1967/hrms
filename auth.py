@@ -1,33 +1,74 @@
 import streamlit as st
 
 def login():
-    st.markdown('<style>body {direction: rtl;}</style>', unsafe_allow_html=True)
-    st.title("نظام إدارة الموارد البشرية")
+    st.markdown(
+        """
+        <style>
+            body {
+                direction: rtl;
+                text-align: right;
+            }
+            .login-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 80vh;
+            }
+            .login-card {
+                background-color: var(--theme-card-bg);
+                padding: 2rem;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px var(--theme-shadow-color);
+                width: 100%;
+                max-width: 400px;
+                border: 1px solid var(--theme-card-border);
+            }
+            .login-card h1, .login-card h2, .login-card h3 {
+                color: var(--theme-header-color);
+            }
+            .login-card input {
+                background-color: var(--theme-input-bg);
+                color: var(--theme-input-text);
+                border: 1px solid var(--theme-input-border);
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+
+    st.title("🔒 نظام إدارة الموارد البشرية")
     st.subheader("تسجيل الدخول")
-    
-    username = st.text_input("اسم المستخدم")
-    password = st.text_input("كلمة المرور", type="password")
-    
+
+    username = st.text_input("👤 اسم المستخدم")
+    password = st.text_input("🔑 كلمة المرور", type="password")
+
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("دخول"):
+        if st.button("🚪 دخول"):
             if username == "admin" and password == "admin123":
                 st.session_state["role"] = "مدير"
                 st.session_state["username"] = "مدير النظام"
-                st.success("مرحبًا مدير النظام!")
+                st.success("🎉 مرحبًا مدير النظام!")
                 st.rerun()
             elif username == "employee" and password == "emp123":
                 st.session_state["role"] = "موظف"
                 st.session_state["username"] = "موظف"
                 st.session_state["employee_id"] = "EMP001"
-                st.success("مرحبًا موظف!")
+                st.success("🎉 مرحبًا موظف!")
                 st.rerun()
             else:
-                st.error("بيانات الدخول غير صحيحة")
-    
+                st.error("❌ بيانات الدخول غير صحيحة")
+
     with col2:
-        if st.button("نسيت كلمة المرور؟"):
-            st.info("يرجى التواصل مع قسم الموارد البشرية")
+        if st.button("❓ نسيت كلمة المرور؟"):
+            st.info("📞 يرجى التواصل مع قسم الموارد البشرية")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 def logout():
     st.session_state.clear()
@@ -42,7 +83,7 @@ def require_role(required_role):
             if st.session_state.get("role") == required_role:
                 return func(*args, **kwargs)
             else:
-                st.warning("ليس لديك صلاحية الوصول إلى هذه الصفحة")
+                st.warning("🔐 ليس لديك صلاحية الوصول إلى هذه الصفحة")
                 return None
         return wrapper
     return decorator
